@@ -1,0 +1,43 @@
+@startuml
+
+participant FE as fe
+participant "Gateway/LoadBalancer" as gw
+participant "Authentication Service" as auth
+participant "User Service" as user
+participant "Promotion Service" as promo
+participant "Message Queue" as mq
+participant Cache as cache
+Database "Database" as wdb
+
+
+== Flow 1: Register a new user==
+
+rnote over fe
+  register_payload = {
+    username
+    phone
+   email
+   full name
+   birthday
+  }
+end rnote
+
+fe->gw: POST /register
+gw->auth: POST /register
+auth->user:
+user->db: insert a new user
+db->user:
+
+alt success
+  user->auth: response success
+  auth->mq: produce register event
+  auth->gw: response success
+  gw->fe: response success
+else failed
+  user->auth: response failed
+  auth->gw: response failed
+  gw->fe: response failed
+end
+
+
+@enduml

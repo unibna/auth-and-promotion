@@ -1,0 +1,50 @@
+@startuml
+
+participant FE as fe
+participant "Gateway/LoadBalancer" as gw
+participant "Authentication Service" as auth
+participant "User Service" as user
+participant "Promotion Service" as promo
+participant "Message Queue" as mq
+participant Cache as cache
+Database "Database" as db
+
+
+== Flow 2.1: Manual login/First login==
+
+rnote over fe
+  login_payload = {
+    account
+      (phone/email/username)
+    hash(password)
+  }
+end rnote
+
+fe->gw: POST /login
+gw->auth: POST /login
+auth->user: verify user info by account
+user->db: get user info
+db->user:
+user->auth:
+alt if verified
+  rnote over auth
+    generate session
+    cache_key = <username>_<phone>_<email>_<session_id>
+  end rnote
+  auth->cache: store session with timeout
+  cache->auth:
+  auth->mq: produce login event
+  auth->gw: set cookie session_id=<session_id>
+  gw->fe: set cookie session_id=<session_id>
+  rnote over fe
+    store session
+  end rnote
+else not verified
+  db->user: response failed
+  user->auth: response failed
+  auth->gw: response failed
+  gw->fe: response failed
+end
+
+
+@enduml

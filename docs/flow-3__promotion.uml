@@ -1,0 +1,41 @@
+@startuml
+
+participant FE as fe
+participant "Gateway/LoadBalancer" as gw
+participant "Authentication Service" as auth
+participant "User Service" as user
+participant "Promotion Service" as promo
+participant "Message Queue" as mq
+participant Cache as cache
+Database "Database" as db
+
+
+== Flow 3: Promotion==
+
+== Flow 3.1: Issue vouchers==
+promo->db: issue vouchers
+
+
+== Flow 3.2: Claim vouchers==
+  promo->mq: consume login event
+  mq->promo:
+  
+  promo->db: get a unclaimed voucher
+  db->promo:
+  promo->db: allocate for login event's user
+  db->promo:
+  rnote over promo
+    push notification
+  end rnote
+  
+== Flow 3.3: Get vouchers ==
+  fe->gw: GET /vouchers
+  gw->promo: GET /vouchers
+  promo->auth: verify user (auto login)
+  auth->promo:
+  promo->db: fetch vouchers
+  db->promo:
+  promo->gw: response
+  gw->fe: response
+
+@enduml

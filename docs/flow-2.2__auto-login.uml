@@ -1,0 +1,38 @@
+@startuml
+
+participant FE as fe
+participant "Gateway/LoadBalancer" as gw
+participant "Authentication Service" as auth
+participant "User Service" as user
+participant "Promotion Service" as promo
+participant "Message Queue" as mq
+participant Cache as cache
+Database "Database" as db
+
+
+== Flow 2.2: Auto login==
+
+fe->gw: set cookie (session_id=<session_id>)
+gw->auth: set cookie (session_id=<session_id>)
+auth->cache: get session (key contains session_id)
+cache->auth:
+alt exist
+  alt success
+    auth->mq: produce login event
+    rnote over auth
+      do something
+    end rnote
+    auth->gw: response
+    gw->fe: response
+  else failed
+    auth->gw: response unauthorized error
+    gw->fe: response unauthorized error
+  end
+else not exist
+  cache->auth: response failed
+  auth->gw: response error
+  gw->fe: response error
+end
+
+
+@enduml
