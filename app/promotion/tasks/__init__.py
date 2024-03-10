@@ -1,8 +1,12 @@
-from app.promotion.tasks.tasks import (
-    sync_auth_events_task,
-)
+from celery.local import PromiseProxy
 
+from app.promotion.tasks import tasks
+
+task_names = []
+for k, v in tasks.__dict__.items():
+    if isinstance(v, PromiseProxy):
+        task_names.append(str(k))
 
 __all__ = [
-    "sync_auth_events_task",
+    *task_names
 ]

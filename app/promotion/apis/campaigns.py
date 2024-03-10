@@ -7,9 +7,11 @@ from fastapi import (
 )
 from loguru import logger
 from starlette import status
+from tortoise import exceptions
 from typing import (
     Any,
     List,
+    Optional,
 )
 
 from app.promotion import models, schemas
@@ -43,6 +45,11 @@ async def get_campaign(
     try:
         campaign = await models.Campaign.get(id=campaign_id)
         return campaign
+    except exceptions.DoesNotExist:
+        raise HTTPException(
+            detail="not found",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
     except Exception as e:
         logger.error(f"failed to get a campaign. campaign_id: {campaign_id}. error: {e}")
         raise HTTPException(
@@ -59,7 +66,6 @@ async def create_campaign(
 ) -> schemas.CampaignResponse:
     try:
         payload_as_dict = await filter_none_fields(payload.dict())
-        print("-----> payload_as_dict:", payload_as_dict)
         campaign = await models.Campaign.create(**payload_as_dict)
         return campaign
     except Exception as e:
@@ -76,12 +82,34 @@ async def create_campaign(
 async def update_campaign(
     campaign_id: int,
     payload: schemas.CampaignUpdate,
-) -> schemas.CampaignResponse:
+) -> Optional[schemas.CampaignResponse]:
+    try:
+        campaign = await models.Campaign.get(id=campaign_id)
+    except exceptions.DoesNotExist:
+        raise HTTPException(
+            detail="not found",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    except Exception as e:
+        logger.error(f"failed to get a campaign. campaign_id: {campaign_id}. error: {e}")
+        raise HTTPException(
+            detail="internal server error",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+    
+    if campaign.status not in [
+        models.ValidCampaignStatus.DRAFT,
+        models.ValidCampaignStatus.WAITING,
+    ]:
+        raise HTTPException(
+            detail="can not update",
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        )
+
     try:
         payload_as_dict = await filter_none_fields(payload.dict())
-        print("-----> payload_as_dict:", payload_as_dict)
-        campaign = await models.Campaign.get(id=campaign_id).update(**payload_as_dict)
-        return campaign
+        await models.Campaign.get(id=campaign_id).update(**payload_as_dict)
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
     except Exception as e:
         logger.error(f"failed to update new campaign. error: {e}")
         raise HTTPException(

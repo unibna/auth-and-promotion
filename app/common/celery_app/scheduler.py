@@ -1,14 +1,13 @@
-from celery.schedules import crontab
-from datetime import timedelta
+from celery.schedules import crontab, schedule
 
 
 scheduler_tasks = {
-    "sync_auth_events": {
-        "task": "sync_auth_events",
-        "schedule": crontab(minute="*")
+    "trigger_campaigns": {
+        "task": "trigger_campaigns",
+        "schedule": schedule(run_every=10),
     },
-    "process_campaigns": {
-        "task": "process_campaigns",
-        "schedule": crontab(minute="*")
+    "trigger_running_campaigns": {
+        "task": "trigger_running_campaigns",
+        "schedule": schedule(run_every=10),
     },
 }

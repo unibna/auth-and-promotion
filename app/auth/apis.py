@@ -9,10 +9,13 @@ import json
 from loguru import logger
 from starlette import status
 from time import time
+from typing import Any
+from uuid import uuid4
 
 from app.auth import schemas, services
 from app.auth.helpers import generate_session, verify_session
-from app.auth.producers import product_login_event
+from app.common.configs import KAFKA_TOPICS
+from app.common.producers import produce_event, produce_event_task
 from app.user.schemas import UserResponse
 
 
@@ -46,7 +49,14 @@ async def login_manual(
     session = await generate_session(UserResponse.parse_obj(user_as_dict))
     response = Response(status_code=status.HTTP_204_NO_CONTENT)
     response.set_cookie(key="session_id", value=session.id)
-    await product_login_event(session)
+    message = {
+        "topic": KAFKA_TOPICS.get('user_events'),
+        "value": {
+            "action_type": "LOGIN_MANUAL",
+            "user_id": user_as_dict.get("id"),
+        },
+    }
+    await produce_event(**message)
     return response
 
 
@@ -58,6 +68,15 @@ async def login_auto(
     session: schemas.Session = Security(
         verify_session,
     )
-) -> None:
-    await product_login_event(session)
-    return session.data
+) -> Any:
+    user_id = session.data['user_id']
+    message = {
+        "topic": KAFKA_TOPICS.get('user_events'),
+        "value": {
+            "action_type": "LOGIN_AUTO",
+            "user_id": user_id,
+        },
+    }
+    # produce_event_task.apply_async(kwargs=message)
+    await produce_event(**message)
+    return message

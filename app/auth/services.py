@@ -24,3 +24,12 @@ async def register_user(payload: Register) -> dict:
         return json.loads(response.content)
     else:
         raise Exception(f"failed to register user. error: {response.content}")
+    
+
+async def get_user(user_id: int) -> dict:
+    url = ROOT_URLS.get('user') + f"/{user_id}"
+    response = requests.get(url)
+    if response.status_code in [200, 204]:
+        return json.loads(response.content)
+    else:
+        raise Exception(f"failed to login user. error: {response.content}")

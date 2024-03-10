@@ -11,7 +11,7 @@ from app.common.configs import KAFKA_TOPICS
 kafka_producer = KafkaConnector.init_producer(KAFKA_CONFIGS)
 
 
-async def product_login_event(session: Session) -> None:
+async def produce_login_event(session: Session) -> None:
     try:
         kafka_producer.produce(
             topic=KAFKA_TOPICS.get("login_event"),

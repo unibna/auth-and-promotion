@@ -5,10 +5,11 @@ from starlette import status
 from time import time
 from typing import Optional
 
-from app.auth import configs, schemas
+from app.auth import configs, schemas, services
 from app.common.cache import cache
 from app.common.security.crypter import crypter
 from app.user.schemas import UserResponse
+
 
 
 async def generate_session(user: UserResponse) -> Optional[schemas.Session]:
@@ -48,7 +49,7 @@ async def verify_session(request: Request) -> Optional[schemas.Session]:
         if session_data:
             return schemas.Session.parse_obj({
                 "id": session_id,
-                "data": session_data
+                "data": session_data,
             })
         else:
             raise HTTPException(

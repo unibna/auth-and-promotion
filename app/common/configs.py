@@ -44,8 +44,6 @@ TORTOISE_ORM = {
     "apps": {
         "models": {
             "models": [
-                "aerich.models",
-                
                 "app.auth.models",
                 "app.user.models",
                 "app.promotion.models",
@@ -57,12 +55,13 @@ TORTOISE_ORM = {
 
 # Kafka
 KAFKA_TOPICS = {
-    "login_event": "auth.login",
+    "user_events": "user.events",
 }
 KAFKA_CONFIGS = {
     "bootstrap.servers": os.getenv("KAFKA_SERVER"),
     "group.id": os.getenv("KAFKA_GROUP_ID"),
-    "auto.offset.reset": os.getenv("KAFKA_AUTO_OFFSET_RESET"),
+    # "auto.offset.reset": os.getenv("KAFKA_AUTO_OFFSET_RESET"),
+    "auto.offset.reset": "earliest",
 }
 
 # Security

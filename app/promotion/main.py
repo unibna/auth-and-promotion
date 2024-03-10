@@ -9,7 +9,7 @@ import uvicorn
 
 from app.common.bootstrap import init
 from app.promotion.configs import SERVICE_NAME, API_SERVER_INFO
-from app.promotion.apis import router
+from app.promotion.apis.campaigns import router
 
 
 app = FastAPI()
