@@ -50,4 +50,3 @@ async def produce_event(
         kafka_producer.flush()
     except Exception as e:
         logger.error(f"failed to produce login event. error: {e}")
-

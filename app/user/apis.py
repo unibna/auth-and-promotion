@@ -2,8 +2,6 @@ from fastapi import (
     APIRouter,
     HTTPException,
     Response,
-    Request,
-    Security,
 )
 from loguru import logger
 from starlette import status
@@ -12,7 +10,9 @@ from typing import (
     List,
 )
 
+from app.common.configs import KAFKA_TOPICS
 from app.common.security.crypter import crypter
+from app.common.producers import produce_event
 from app.user import models, schemas
 from app.user.helpers import get_credential_types
 
@@ -88,6 +88,19 @@ async def login_user(
     user = await models.User.filter(**credential_type).first()
     hashed_payload_password = str(crypter.hash_password(payload.password.encode()))
     if hashed_payload_password == user.password:
+        if not user.is_active:
+            logger.warning(f"user is not active. user: {user.id}")
+            logger.debug(f"activate a new user. user: {user.id}")
+            user.is_active = True
+            await user.save()
+            message = {
+                "topic": KAFKA_TOPICS.get('user_events'),
+                "value": {
+                    "action_type": "USER_ACTIVATE",
+                    "user_id": user.id,
+                },
+            }
+            await produce_event(**message)
         return user
     else:
         raise HTTPException(
@@ -101,6 +114,7 @@ async def register_user(
     payload: schemas.UserRegister
 ) -> schemas.UserResponse:
     try:
+        payload.password = str(crypter.hash_password(payload.password.encode()))
         user = await models.User.create(**payload.dict())
         return user
     except Exception as e:
