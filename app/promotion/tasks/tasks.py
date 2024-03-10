@@ -9,7 +9,7 @@ from typing import List
 from app.common.celery_app import celery_app
 from app.common.configs import KAFKA_TOPICS
 from app.common.kafka import KafkaConnector
-from app.promotion import models, schemas
+from app.promotion import models, helpers
 from app.promotion.configs import KAFKA_CONFIGS
 
 
@@ -107,17 +107,19 @@ async def process_running_campaign(
         await models.Campaign.get(id=campaign_id).update(
             status=models.ValidCampaignStatus.RUNNING,
         )
+
+    condition = await models.Condition.filter(campaign=campaign).first()
+    result = await models.Result.filter(campaign=campaign).first()
         
     consumer = KafkaConnector.init_consumer(KAFKA_CONFIGS)
     consumer.subscribe(events_topics)
     message = consumer.poll(1.0)
-    if message:
-        message_value = json.loads(message.value().decode())
-        logger.debug(f"-----> message_value. type: {type(message_value)}. value: {message_value}")
-        if message_value.get("action_type") == "USER_ACTIVATE":
-            logger.warning("************issue voucher for a new user************")
-    else:
+    if not message:
         logger.warning(f"there is no message to process. campaign_id: {campaign_id}")
-    consumer.close()    
-
-    logger.success(f"process RUNNING campaign successfully. campaign_id: {campaign_id}")
+        consumer.close()
+        return
+    
+    message_value = json.loads(message.value().decode())
+    if await helpers.is_match_condition(message_value, condition, campaign):
+        logger.warning("***** match condition *****")
+        await helpers.process_result(message_value, result, campaign)

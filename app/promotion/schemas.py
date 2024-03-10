@@ -5,6 +5,7 @@ from pydantic import (
     BaseModel,
 )
 from typing import (
+    List,
     Optional,
 )
 
@@ -37,3 +38,33 @@ class CampaignResponse(BaseModel):
     status: str = None
     type: str = None
     total_vouchers: int = None
+
+
+class ConditionCreate(BaseModel):
+    type: str
+    operator: str
+    value_type: str
+    value: str
+    value_unit: str
+
+
+class ConditionResponse(BaseModel):
+    campaign_id: int
+    type: str
+    operator: str
+    value_type: str
+    value: str
+    value_unit: str
+
+
+class ResultCreate(BaseModel):
+    type: str
+    value: str
+    value_unit: str
+
+
+class ResultResponse(BaseModel):
+    campaign_id: int
+    type: str
+    value: str
+    value_unit: str

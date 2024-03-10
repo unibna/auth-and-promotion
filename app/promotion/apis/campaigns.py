@@ -2,8 +2,6 @@ from fastapi import (
     APIRouter,
     HTTPException,
     Response,
-    Request,
-    Security,
 )
 from loguru import logger
 from starlette import status
@@ -19,6 +17,22 @@ from app.utils.pydantic_utils import filter_none_fields
 
 
 router = APIRouter()
+
+
+@router.get(
+    path="/test"
+)
+async def test(user_id: int):
+    from app.common.configs import KAFKA_TOPICS
+    from app.common.producers import produce_event
+    message = {
+        "topic": KAFKA_TOPICS.get('user_events'),
+        "value": {
+            "action_type": "USER_ACTIVATE",
+            "user_id": user_id,
+        },
+    }
+    await produce_event(**message)
 
 
 @router.get(
@@ -138,7 +152,7 @@ async def action_campaign(
             campaign.status = models.ValidCampaignStatus.WAITING
             await campaign.save()
             return Response(
-                detail="start successfully",
+                content="start successfully",
                 status_code=status.HTTP_200_OK,
             )
         else:
@@ -152,7 +166,7 @@ async def action_campaign(
             campaign.status = models.ValidCampaignStatus.PAUSE
             await campaign.save()
             return Response(
-                detail="pause successfully",
+                content="pause successfully",
                 status_code=status.HTTP_200_OK,
             )
         else:
@@ -165,7 +179,7 @@ async def action_campaign(
             campaign.status = models.ValidCampaignStatus.RUNNING
             await campaign.save()
             return Response(
-                detail="pause successfully",
+                content="pause successfully",
                 status_code=status.HTTP_200_OK,
             )
         else:
@@ -178,3 +192,81 @@ async def action_campaign(
             detail="invalid action",
             status_code=status.HTTP_400_BAD_REQUEST,
         )
+
+
+@router.get(
+    path="/campaigns/{campaign_id}/conditions"
+)
+async def get_campaign_conditions(
+    campaign_id: int,
+) -> List[schemas.ConditionResponse]:
+    campaign = await models.Campaign.get(id=campaign_id)
+    if not campaign:
+        raise HTTPException(
+            detail="campaign is not found",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    
+    conditions = await models.Condition.filter(campaign=campaign).all()
+    return conditions
+
+
+@router.post(
+    path="/campaigns/{campaign_id}/conditions"
+)
+async def get_campaign_conditions(
+    campaign_id: int,
+    payload: schemas.ConditionCreate,
+) -> schemas.ConditionResponse:
+    campaign = await models.Campaign.get(id=campaign_id)
+    if not campaign:
+        raise HTTPException(
+            detail="campaign is not found",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    
+    await models.Condition.filter(campaign=campaign).delete()
+    condition = await models.Condition.create(
+        campaign_id=campaign_id,
+        **payload.dict()
+    )
+    return condition
+
+
+@router.get(
+    path="/campaigns/{campaign_id}/results"
+)
+async def get_campaign_results(
+    campaign_id: int,
+) -> List[schemas.ResultResponse]:
+    campaign = await models.Campaign.get(id=campaign_id)
+    if not campaign:
+        raise HTTPException(
+            detail="campaign is not found",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+
+    results = await models.Result.filter(campaign=campaign).all()
+    return results
+
+
+@router.post(
+    path="/campaigns/{campaign_id}/results"
+)
+async def get_campaign_results(
+    campaign_id: int,
+    payload: schemas.ResultCreate,
+) -> schemas.ResultResponse:
+    campaign = await models.Campaign.get(id=campaign_id)
+    if not campaign:
+        raise HTTPException(
+            detail="campaign is not found",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    
+    await models.Result.filter(campaign=campaign).delete()
+    result = await models.Result.create(
+        campaign_id=campaign_id,
+        **payload.dict()
+    )
+    return result

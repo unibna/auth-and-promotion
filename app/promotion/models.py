@@ -6,7 +6,7 @@ from tortoise import fields
 from tortoise.models import Model
 
 if TYPE_CHECKING:
-    from app.user.models import User
+    import app.user.models
 
 
 class ValidCampaignStatus(str, Enum):
@@ -21,11 +21,6 @@ class ValidCampaignStatus(str, Enum):
 class ValidCampaignType(str, Enum):
     DIRECT_APPLY = "direct_apply"
     ISSUE_VOUCHER = "issue_voucher"
-
-
-class ValidDataSource(str, Enum):
-    EVENT = "event"
-    SEGMENT = "segment"
 
 
 class Campaign(Model):
@@ -61,5 +56,84 @@ class Campaign(Model):
             raise ValueError("total_voucher must be greater than 0")
 
 
+class ValidConditionType(str, Enum):
+    EVENT = "event"
+
+
+class ValidConditionOperator(str, Enum):
+    EQUAL = 'equal'
+    NOT_EQUAL = 'not_equal'
+
+
+class ValidConditionValueType(str, Enum):
+    INT = "int"
+    FLOAT = "float"
+    STRING = "string"
+
+
+class ValidConditionValueUnit(str, Enum):
+    NUMBER = "number"
+    PERCENT = "percent"
+    STRING = "string"
+
+
 class Condition(Model):
-    pass
+    id = fields.BigIntField(pk=True)
+    created_at = fields.DatetimeField(auto_now_add=True, timezone="Asia/Ho_Chi_Minh")
+    updated_at = fields.DatetimeField(auto_now=True, timezone="Asia/Ho_Chi_Minh")
+    
+    campaign: "fields.ForeignKeyRelation[Campaign]" = fields.ForeignKeyField('models.Campaign', related_name="campaign_conditions")
+    type = fields.CharEnumField(ValidConditionType, max_length=32)
+    operator = fields.CharEnumField(ValidConditionOperator, max_length=32,
+                                    default=ValidConditionOperator.EQUAL)
+    value_type = fields.CharEnumField(ValidConditionValueType, max_length=32)
+    value = fields.CharField(max_length=256)
+    value_unit = fields.CharEnumField(ValidConditionValueUnit, max_length=32)
+
+
+class ValidResultType(str, Enum):
+    VOUCHER = 'voucher'
+    CASH = 'cash'
+
+
+class ValidResultValueUnit(str, Enum):
+    NUMBER = "number"
+    PERCENT = "percent"
+    STRING = "string"
+
+
+class Result(Model):
+    id = fields.BigIntField(pk=True)
+    created_at = fields.DatetimeField(auto_now_add=True, timezone="Asia/Ho_Chi_Minh")
+    updated_at = fields.DatetimeField(auto_now=True, timezone="Asia/Ho_Chi_Minh")
+    campaign = fields.ForeignKeyField('models.Campaign', related_name="campaign_results")
+    type = fields.CharEnumField(ValidResultType, max_length=32)
+    value = fields.CharField(max_length=256)
+    value_unit = fields.CharEnumField(ValidResultValueUnit, max_length=32)
+
+
+class ValidVoucherType(str, Enum):
+    DIRECT_DISCOUNT = 'direct_discount'
+    GIFT = "gift"
+
+
+class ValidVoucherValueUnit(str, Enum):
+    NUMBER = "number"
+    PERCENT = "percent"
+    STRING = "string"
+
+
+class Voucher(Model):
+    id = fields.BigIntField(pk=True)
+    created_at = fields.DatetimeField(auto_now_add=True, timezone="Asia/Ho_Chi_Minh")
+    updated_at = fields.DatetimeField(auto_now=True, timezone="Asia/Ho_Chi_Minh")
+    
+    expired_at = fields.DatetimeField(timezone="Asia/Ho_Chi_Minh")
+    claimed_at = fields.DatetimeField(auto_now_add=True, timezone="Asia/Ho_Chi_Minh")
+    used_at = fields.DatetimeField(null=True, timezone="Asia/Ho_Chi_Minh")
+
+    campaign = fields.ForeignKeyField('models.Campaign', related_name="campaign_vouchers")
+    user_id = fields.BigIntField()
+    type = fields.CharEnumField(ValidVoucherType, max_length=32)
+    value = fields.CharField(max_length=256)
+    value_unit = fields.CharEnumField(ValidVoucherValueUnit, max_length=32)

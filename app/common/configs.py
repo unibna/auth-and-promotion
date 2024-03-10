@@ -60,8 +60,7 @@ KAFKA_TOPICS = {
 KAFKA_CONFIGS = {
     "bootstrap.servers": os.getenv("KAFKA_SERVER"),
     "group.id": os.getenv("KAFKA_GROUP_ID"),
-    # "auto.offset.reset": os.getenv("KAFKA_AUTO_OFFSET_RESET"),
-    "auto.offset.reset": "earliest",
+    "auto.offset.reset": os.getenv("KAFKA_AUTO_OFFSET_RESET"),
 }
 
 # Security
