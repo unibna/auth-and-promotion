@@ -9,9 +9,9 @@ pip install -r requirements.txt
 ```
 
 ## Build environment
-Note: replace <shell> by your shell. In my case, it's "zsh"
+Note: replace {shell} by your shell. In my case, it's "zsh"
 ```
-eval "$(direnv hook <shell>)"
+eval "$(direnv hook {shell})"
 direnv allow
 ```
 
