@@ -1,6 +1,7 @@
 import asyncio
 from celery.signals import worker_init
 from datetime import datetime, timedelta, timezone
+import json
 from loguru import logger
 from tortoise.expressions import Q
 from typing import List
@@ -109,13 +110,14 @@ async def process_running_campaign(
         
     consumer = KafkaConnector.init_consumer(KAFKA_CONFIGS)
     consumer.subscribe(events_topics)
-    event = consumer.poll(1.0)
-    if event:
-        event_key = event.key()
-        event_value = event.value()
-        logger.debug(f"key: {event_key}. value: {event_value}")
+    message = consumer.poll(1.0)
+    if message:
+        message_value = json.loads(message.value().decode())
+        logger.debug(f"-----> message_value. type: {type(message_value)}. value: {message_value}")
+        if message_value.get("action_type") == "USER_ACTIVATE":
+            logger.warning("************issue voucher for a new user************")
     else:
-        logger.warning(f"no events to process. campaign_id: {campaign_id}")
+        logger.warning(f"there is no message to process. campaign_id: {campaign_id}")
     consumer.close()    
 
     logger.success(f"process RUNNING campaign successfully. campaign_id: {campaign_id}")
