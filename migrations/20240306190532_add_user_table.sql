@@ -18,8 +18,8 @@ CREATE TABLE IF NOT EXISTS "user" (
 );
 ALTER TABLE "user" ALTER "created_at" TYPE timestamptz USING "created_at" AT TIME ZONE 'UTC';
 ALTER TABLE "user" ALTER "updated_at" TYPE timestamptz USING "updated_at" AT TIME ZONE 'UTC';
-ALTER TABLE "user" ALTER "deleted_at" TYPE timestamptz USING "updated_at" AT TIME ZONE 'UTC';
-ALTER TABLE "user" ALTER "last_login" TYPE timestamptz USING "updated_at" AT TIME ZONE 'UTC';
+ALTER TABLE "user" ALTER "deleted_at" TYPE timestamptz USING "deleted_at" AT TIME ZONE 'UTC';
+ALTER TABLE "user" ALTER "last_login" TYPE timestamptz USING "last_login" AT TIME ZONE 'UTC';
 
 -- +goose Down
 -- +goose StatementBegin

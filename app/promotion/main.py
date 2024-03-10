@@ -1,3 +1,9 @@
+import os 
+import sys
+BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+APP_DIR = os.path.dirname(BASE_DIR).replace('app', '')
+sys.path.append(APP_DIR)
+
 from fastapi import FastAPI
 import uvicorn
 

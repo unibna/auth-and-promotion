@@ -1,5 +1,6 @@
 from datetime import (
     date,
+    datetime,
 )
 from pydantic import (
     BaseModel,
@@ -9,6 +10,8 @@ from pydantic import (
 
 class UserResponse(BaseModel):
     id: int
+    created_at: datetime
+    updated_at: datetime
     username: str
     email: EmailStr
     phone: str

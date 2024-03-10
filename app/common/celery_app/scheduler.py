@@ -7,4 +7,8 @@ scheduler_tasks = {
         "task": "sync_auth_events",
         "schedule": crontab(minute="*")
     },
+    "process_campaigns": {
+        "task": "process_campaigns",
+        "schedule": crontab(minute="*")
+    },
 }
