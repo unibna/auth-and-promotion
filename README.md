@@ -8,6 +8,13 @@
 pip install -r requirements.txt
 ```
 
+## Build environment
+Note: replace <shell> by your shell. In my case, it's "zsh"
+```
+eval "$(direnv hook <shell>)"
+direnv allow
+```
+
 ## Start services:
 At /app directory,
 1. Auth service
