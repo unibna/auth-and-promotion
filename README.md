@@ -16,7 +16,7 @@ direnv allow
 ```
 
 ## Start services:
-At /app directory,
+At project's directory,
 1. Auth service
 ```
 python app/auth/main.py
@@ -31,7 +31,7 @@ python app/promotion/main.py
 ```
 
 ## Start workers
-At /app directory,
+At project's directory,
 1. Celery beat
 ```
 celery -A app.common.celery_app.tasks beat -l info
